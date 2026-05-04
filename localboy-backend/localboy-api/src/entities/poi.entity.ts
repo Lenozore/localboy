@@ -16,8 +16,8 @@ export class Poi {
   @Column('text', { nullable: true })
   description: string;
 
-  @Column({ nullable: true })
-  image_url: string;
+  @Column('text', { array: true, nullable: true })
+  photo_urls: string[];
 
   @Column()
   category: string;
@@ -32,10 +32,13 @@ export class Poi {
   avg_visit_minutes: number;
 
   @Column({ default: 5 })
-  priority: number;
+  popularity_score: number;
 
   @Column({ default: 'Goa' })
   city: string;
+
+  @Column({ default: 'Goa' })
+  state: string;
 
   @Column({ default: true })
   is_active: boolean;

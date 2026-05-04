@@ -204,7 +204,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
             _buildInfoRow(
               Icons.card_travel,
               'Package',
-              _booking!.packageType == 'half_day'
+              _booking!.tripType == 'half_day'
                   ? 'Half Day (4 hours)'
                   : 'Full Day (8 hours)',
             ),
@@ -212,13 +212,13 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
             _buildInfoRow(
               Icons.location_on,
               'Pickup Location',
-              _booking!.hotelAddress,
+              _booking!.pickupAddress ?? 'Not set',
             ),
             const SizedBox(height: 12),
             _buildInfoRow(
               Icons.payments,
               'Total Amount',
-              '₹${_booking!.totalAmount.toStringAsFixed(0)}',
+              '₹${(_booking!.touristCharge ?? 0).toStringAsFixed(0)}',
             ),
           ],
         ),
@@ -302,25 +302,100 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               itemCount: _booking!.itinerary!.length,
               itemBuilder: (context, index) {
                 final stop = _booking!.itinerary![index];
+                final poiName = stop.poi?.name ?? 'Stop ${index + 1}';
+                final poiCategory = stop.poi?.category ?? '';
+                final poiDescription = stop.poi?.description ?? '';
+                final arrivalTime = stop.estimatedArrival ?? '';
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: Column(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Stop ${index + 1}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey,
-                        ),
+                      // Stop number indicator
+                      Column(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${index + 1}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (index < _booking!.itinerary!.length - 1)
+                            Container(
+                              width: 2,
+                              height: 40,
+                              color: Colors.grey[300],
+                            ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        stop.toString(),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(width: 12),
+                      // Stop details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              poiName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (poiCategory.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  poiCategory[0].toUpperCase() + poiCategory.substring(1),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            if (arrivalTime.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'ETA: $arrivalTime',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            if (poiDescription.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  poiDescription,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[500],
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ],

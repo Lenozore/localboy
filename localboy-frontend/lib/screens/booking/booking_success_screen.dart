@@ -57,7 +57,7 @@ class BookingSuccessScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  booking.bookingCode,
+                  booking.bookingCode ?? 'N/A',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -79,7 +79,7 @@ class BookingSuccessScreen extends StatelessWidget {
                           Icons.access_time, 'Time', booking.startTime),
                       const Divider(height: 20),
                       _buildInfoRow(Icons.location_on, 'Pickup',
-                          booking.hotelAddress),
+                          booking.pickupAddress ?? 'Not set'),
                     ],
                   ),
                 ),

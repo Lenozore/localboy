@@ -125,7 +125,7 @@ class BookingCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    DateFormat('hh:mm a').format(booking.tripDate),
+                    booking.startTime,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,

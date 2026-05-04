@@ -1,34 +1,36 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Enable CORS for Flutter app
+  // Global API prefix
+  app.setGlobalPrefix('api');
+
+  // Serve uploaded files at /uploads
+  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
+
+  // Enable CORS
+  const corsOrigin = process.env.CORS_ORIGIN || '*';
   app.enableCors({
-    origin: '*',
+    origin: corsOrigin === '*' ? true : corsOrigin.split(','),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
 
-  // Enable validation
+  // Global validation pipe (validates DTOs automatically)
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
       transform: true,
     }),
   );
 
-  // API prefix
-  app.setGlobalPrefix('api');
-
   const port = process.env.PORT || 3000;
   await app.listen(port);
-
-  console.log(`🚀 Server running on http://localhost:${port}`);
-  console.log(`📱 Ready for Flutter app connections`);
+  console.log(`🚀 Localboy API running on http://localhost:${port}/api`);
 }
-
-void bootstrap();
+bootstrap();

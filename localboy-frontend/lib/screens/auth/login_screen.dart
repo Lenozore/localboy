@@ -26,7 +26,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = context.read<AuthProvider>();
     final phone = '+91${_phoneController.text}';
 
-    final success = await authProvider.sendOtp(phone);
+    final success = await authProvider.sendOtp(
+      target: phone,
+      targetType: 'phone',
+    );
 
     if (!mounted) return;
 
@@ -34,7 +37,11 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => OtpScreen(phone: phone),
+          builder: (_) => OtpScreen(
+            target: phone,
+            targetType: 'phone',
+            displayTarget: phone,
+          ),
         ),
       );
     } else {

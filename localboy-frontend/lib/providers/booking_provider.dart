@@ -1,42 +1,77 @@
 import 'package:flutter/material.dart';
 import '../models/booking.dart';
 import '../models/poi.dart';
-import '../servies/api_service.dart';
+import '../services/api_service.dart';
 
 class BookingProvider with ChangeNotifier {
   final ApiService _api = ApiService();
-  
+
   List<Poi> _pois = [];
-  List<Booking> _myBookings = [];
+  List<Poi> _nearbyPois = [];
+  List<Booking> _bookings = [];
   bool _isLoading = false;
   String? _error;
 
   List<Poi> get pois => _pois;
-  List<Booking> get myBookings => _myBookings;
+  List<Poi> get nearbyPois => _nearbyPois;
+  List<Booking> get bookings => _bookings;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Fetch POIs
-  Future<void> fetchPois({String city = 'Goa'}) async {
+  Future<void> fetchPois({String? city}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final response = await _api.get('/pois', params: {'city': city});
-      _pois = (response.data as List)
-          .map((poi) => Poi.fromJson(poi))
-          .toList();
-      _isLoading = false;
-      notifyListeners();
+      final response = await _api.get('/pois', params: city != null ? {'city': city} : null);
+      _pois = (response.data as List).map((json) => Poi.fromJson(json)).toList();
     } catch (e) {
       _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
-  // Create booking
+  Future<void> fetchNearbyPois(double lat, double lng, {double radius = 50}) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _api.get('/pois/nearby', params: {
+        'lat': lat.toString(),
+        'lng': lng.toString(),
+        'radius': radius.toString(),
+      });
+      _nearbyPois = (response.data as List).map((json) => Poi.fromJson(json)).toList();
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchBookings() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _api.get('/bookings/my-bookings');
+      _bookings = (response.data as List)
+          .map((json) => Booking.fromJson(json))
+          .toList();
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
   Future<Booking?> createBooking({
     required DateTime tripDate,
     required String startTime,
@@ -50,18 +85,25 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _api.post('/bookings', data: {
-        'trip_date': tripDate.toIso8601String().split('T')[0],
+      final response = await _api.post('/trips/create', data: {
+        'trip_type': packageType,
+        'trip_date': tripDate.toIso8601String(),
         'start_time': startTime,
-        'package_type': packageType,
-        'hotel_address': hotelAddress,
-        'hotel_lat': hotelLat,
-        'hotel_lng': hotelLng,
+        'pickup_address': hotelAddress,
+        'start_lat': hotelLat,
+        'start_lng': hotelLng,
+        'poi_ids': [],
+        'total_distance_km': 0,
+        'tourist_charge': packageType == 'half_day' ? 1499 : 2499,
+        'platform_fee': packageType == 'half_day' ? 299 : 499,
+        'driver_payout': packageType == 'half_day' ? 900 : 1500,
+        'guide_payout': packageType == 'half_day' ? 300 : 500,
       });
-
+      final booking = Booking.fromJson(response.data);
+      _bookings.insert(0, booking);
       _isLoading = false;
       notifyListeners();
-      return Booking.fromJson(response.data);
+      return booking;
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -70,34 +112,12 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
-  // Fetch my bookings
-  Future<void> fetchMyBookings() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final response = await _api.get('/bookings/my-bookings');
-      _myBookings = (response.data as List)
-          .map((booking) => Booking.fromJson(booking))
-          .toList();
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Get booking details
   Future<Booking?> getBookingDetails(String bookingId) async {
     try {
-      final response = await _api.get('/bookings/$bookingId');
+      final response = await _api.get('/trips/$bookingId');
       return Booking.fromJson(response.data);
     } catch (e) {
       _error = e.toString();
-      notifyListeners();
       return null;
     }
   }

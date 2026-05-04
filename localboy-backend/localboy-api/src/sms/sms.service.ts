@@ -1,33 +1,55 @@
-import { Injectable } from '@nestjs/common';
-import axios from 'axios';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SmsService {
-  private readonly authKey = process.env.MSG91_AUTH_KEY;
-  private readonly templateId = process.env.MSG91_TEMPLATE_ID; // You'll get this after creating template
+  private readonly logger = new Logger(SmsService.name);
+  private twilioClient: any;
+  private readonly messagingServiceSid: string;
 
-  async sendOtp(phone: string, otp: string) {
-    try {
-      const url = `https://control.msg91.com/api/v5/otp`;
-      
-      const payload = {
-        template_id: this.templateId,
-        mobile: phone,
-        authkey: this.authKey,
-        otp: otp,
-      };
+  constructor(private configService: ConfigService) {
+    const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
+    const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+    this.messagingServiceSid = this.configService.get<string>('TWILIO_MESSAGING_SERVICE_SID')!;
 
-      const response = await axios.post(url, payload, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      console.log(`📱 SMS sent to ${phone}: OTP ${otp}`);
-      return response.data;
-    } catch (error) {
-      console.error('SMS Error:', error.response?.data || error.message);
-      // Fallback: still return success so app doesn't break
-      console.log(`📱 FALLBACK - OTP for ${phone}: ${otp}`);
-      return { success: true };
+    if (accountSid && authToken && this.messagingServiceSid) {
+      try {
+        const twilio = require('twilio');
+        this.twilioClient = twilio(accountSid, authToken);
+        this.logger.log('✅ Twilio SMS provider initialized');
+      } catch (error) {
+        this.logger.error(`❌ Failed to initialize Twilio client: ${error.message}`);
+      }
+    } else {
+      this.logger.warn(
+        '⚠️ Twilio credentials not fully configured. SMS OTP will be bypassed in development.',
+      );
     }
   }
-}
+
+  /**
+   * Send OTP via Twilio SMS
+   */
+  async sendOtp(phone: string, otp: string): Promise<boolean> {
+    if (!this.twilioClient) {
+      this.logger.warn(
+        `[DEV] SMS Bypass: Twilio not configured. OTP for ${phone} is ${otp}`,
+      );
+      return true;
+    }
+
+    try {
+      const message = await this.twilioClient.messages.create({
+        body: `Your Localboy verification code is: ${otp}. Valid for 5 minutes.`,
+        messagingServiceSid: this.messagingServiceSid,
+        to: phone,
+      });
+
+      this.logger.log(`📱 OTP sent to ${phone} — SID: ${message.sid}`);
+      return true;
+    } catch (error: any) {
+      this.logger.error(`❌ Twilio send error: ${error.message}`);
+      return false;
+    }
+  }
+}

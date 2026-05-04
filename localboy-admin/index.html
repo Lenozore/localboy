@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Boy Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Auth Overlays -->
+    <div class="auth-overlay" id="authOverlay">
+        <!-- Signup/Login Form -->
+        <div class="auth-card" id="authCard">
+            <div class="auth-logo">🏝️</div>
+            <h2>Local Boy Admin</h2>
+            <p class="text-muted" id="authSubtitle">Create your admin account</p>
+
+            <div id="signupFields">
+                <input type="text" id="adminName" placeholder="Your name" class="input" autocomplete="name">
+            </div>
+            <input type="email" id="adminEmail" placeholder="Email address" class="input" autocomplete="email">
+            <input type="password" id="adminPassword" placeholder="Password (min 6 chars)" class="input"
+                autocomplete="current-password">
+            <div id="authError" class="auth-error"></div>
+
+            <button class="btn btn-primary btn-full" id="authBtn" onclick="handleAuth()">Create Account</button>
+
+            <p class="auth-toggle" id="authToggle">
+                Already have an account? <a href="#" onclick="toggleAuthMode()">Login</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Developer Login Overlay -->
+    <div class="auth-overlay hidden" id="devOverlay">
+        <div class="auth-card dev-card">
+            <div class="auth-logo">🛠️</div>
+            <h2>Developer Access</h2>
+            <p class="text-muted">Restricted area — authorized personnel only</p>
+            <input type="email" id="devEmail" placeholder="Developer email" class="input">
+            <input type="password" id="devPassword" placeholder="Developer password" class="input">
+            <div id="devError" class="auth-error"></div>
+            <button class="btn btn-primary btn-full" onclick="devLogin()">Access Developer Panel</button>
+            <button class="btn btn-outline btn-full" onclick="closeDevLogin()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">🏝️</span>
+                <span class="logo-text">Local Boy</span>
+            </div>
+            <span class="logo-subtitle">Admin Panel</span>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item active" data-section="dashboard">
+                <span class="nav-icon">📊</span> Dashboard
+            </li>
+            <li class="nav-item" data-section="users">
+                <span class="nav-icon">👥</span> Users
+            </li>
+            <li class="nav-item" data-section="trips">
+                <span class="nav-icon">🚗</span> Trips
+            </li>
+            <li class="nav-item" data-section="payments">
+                <span class="nav-icon">💰</span> Payments
+            </li>
+            <li class="nav-item" data-section="documents">
+                <span class="nav-icon">📄</span> Documents
+            </li>
+            <li class="nav-item" data-section="complaints">
+                <span class="nav-icon">⚠️</span> Complaints
+            </li>
+            <li class="nav-item dev-nav" data-section="developer" onclick="openDevLogin()">
+                <span class="nav-icon">🔒</span> Developer
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="admin-info">
+                <span class="admin-avatar" id="adminAvatar">A</span>
+                <span class="admin-name-small" id="adminNameDisplay">Admin</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="header">
+            <div>
+                <h1 id="pageTitle">Dashboard</h1>
+                <p class="header-subtitle" id="headerSubtitle">Real-time overview</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-sm btn-outline" onclick="refreshCurrentSection()">🔄 Refresh</button>
+                <span class="live-indicator"><span class="live-dot"></span> LIVE</span>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section class="section active" id="section-dashboard">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">👥</div>
+                    <div class="stat-info"><span class="stat-value" id="totalUsers">—</span><span
+                            class="stat-label">Total Users</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">🚗</div>
+                    <div class="stat-info"><span class="stat-value" id="totalTrips">—</span><span
+                            class="stat-label">Total Trips</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon amber">💰</div>
+                    <div class="stat-info"><span class="stat-value" id="totalRevenue">—</span><span
+                            class="stat-label">Revenue</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">📄</div>
+                    <div class="stat-info"><span class="stat-value" id="pendingDocs">—</span><span
+                            class="stat-label">Pending Docs</span></div>
+                </div>
+            </div>
+            <div class="stats-grid stats-grid-3">
+                <div class="stat-card mini">
+                    <div class="stat-info"><span class="stat-value small" id="touristCount">—</span><span
+                            class="stat-label">Tourists</span></div>
+                </div>
+                <div class="stat-card mini">
+                    <div class="stat-info"><span class="stat-value small" id="driverCount">—</span><span
+                            class="stat-label">Drivers</span></div>
+                </div>
+                <div class="stat-card mini">
+                    <div class="stat-info"><span class="stat-value small" id="guideCount">—</span><span
+                            class="stat-label">Guides</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Recent Activity</h3>
+                <div id="recentActivity" class="activity-list">
+                    <div class="loading">Loading real-time data...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Users Section -->
+        <section class="section" id="section-users">
+            <div class="card">
+                <div class="card-header">
+                    <h3>User Management</h3>
+                    <div class="filter-group">
+                        <select id="userRoleFilter" class="select" onchange="loadUsers()">
+                            <option value="all">All Roles</option>
+                            <option value="tourist">Tourists</option>
+                            <option value="driver">Drivers</option>
+                            <option value="guide">Guides</option>
+                        </select>
+                        <input type="text" id="userSearch" placeholder="Search..." class="input input-sm"
+                            oninput="filterUsersLocal()">
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Verified</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <tr>
+                                <td colspan="6" class="text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trips Section -->
+        <section class="section" id="section-trips">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Trip Monitoring</h3>
+                    <select id="tripStatusFilter" class="select" onchange="loadTrips()">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Tourist</th>
+                                <th>Driver</th>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Charge</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tripsTable">
+                            <tr>
+                                <td colspan="7" class="text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Payments Section -->
+        <section class="section" id="section-payments">
+            <div class="stats-grid stats-grid-3">
+                <div class="stat-card">
+                    <div class="stat-icon green">💵</div>
+                    <div class="stat-info"><span class="stat-value" id="paymentsReceived">—</span><span
+                            class="stat-label">Collected</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue">📤</div>
+                    <div class="stat-info"><span class="stat-value" id="payoutsPaid">—</span><span
+                            class="stat-label">Payouts</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon amber">📈</div>
+                    <div class="stat-info"><span class="stat-value" id="platformProfit">—</span><span
+                            class="stat-label">Platform Revenue</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Payment History</h3>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Trip</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTable">
+                            <tr>
+                                <td colspan="5" class="text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Documents Section -->
+        <section class="section" id="section-documents">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Document Verification</h3>
+                    <span class="badge badge-warning" id="pendingDocsBadge">— pending</span>
+                </div>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Document</th>
+                                <th>File</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentsTable">
+                            <tr>
+                                <td colspan="5" class="text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Complaints Section -->
+        <section class="section" id="section-complaints">
+            <div class="card">
+                <h3>Complaints</h3>
+                <div id="complaintsList">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Developer Section (locked) -->
+        <section class="section" id="section-developer">
+            <div class="dev-locked" id="devLocked">
+                <div class="lock-icon">🔒</div>
+                <h3>Developer Access Required</h3>
+                <p class="text-muted">This section requires separate developer credentials</p>
+                <button class="btn btn-primary" onclick="openDevLogin()">Enter Developer Credentials</button>
+            </div>
+            <div class="dev-content hidden" id="devContent">
+                <div class="stats-grid stats-grid-3">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">🗄️</div>
+                        <div class="stat-info"><span class="stat-value small" id="dbUsers">—</span><span
+                                class="stat-label">Users in DB</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">📋</div>
+                        <div class="stat-info"><span class="stat-value small" id="dbTrips">—</span><span
+                                class="stat-label">Trips in DB</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon amber">💳</div>
+                        <div class="stat-info"><span class="stat-value small" id="dbPayments">—</span><span
+                                class="stat-label">Payments in DB</span></div>
+                    </div>
+                </div>
+                <div class="stats-grid stats-grid-3">
+                    <div class="stat-card mini">
+                        <div class="stat-info"><span class="stat-value small" id="dbDocuments">—</span><span
+                                class="stat-label">Documents</span></div>
+                    </div>
+                    <div class="stat-card mini">
+                        <div class="stat-info"><span class="stat-value small" id="dbComplaints">—</span><span
+                                class="stat-label">Complaints</span></div>
+                    </div>
+                    <div class="stat-card mini">
+                        <div class="stat-info"><span class="stat-value small" id="dbPois">—</span><span
+                                class="stat-label">POIs</span></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>API Endpoints</h3>
+                    <div class="endpoint-list">
+                        <div class="endpoint"><span class="method get">GET</span> /api/auth/me</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/auth/send-otp</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/auth/verify-otp</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/auth/verify-email</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/auth/complete-profile</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/auth/google</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/pois/nearby</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/trips/plan</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/trips/create</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/trips/my-trips</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/payments/create-order</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/payments/verify</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/payments/history</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/documents/upload</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/documents/pending</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/documents/:id/review</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/messages/send</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/messages/trip/:tripId</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/messages/unread-count</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/admin/signup</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/admin/login</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/admin/stats</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/admin/users</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/admin/trips</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/admin/payments</div>
+                        <div class="endpoint"><span class="method get">GET</span> /api/admin/documents</div>
+                        <div class="endpoint"><span class="method post">POST</span> /api/admin/developer/login</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Environment</h3>
+                    <div class="env-grid">
+                        <div class="env-item"><strong>Backend:</strong> NestJS + TypeORM</div>
+                        <div class="env-item"><strong>Database:</strong> PostgreSQL</div>
+                        <div class="env-item"><strong>Auth:</strong> JWT + OTP (MSG91)</div>
+                        <div class="env-item"><strong>AI:</strong> Google Gemini 2.0 Flash</div>
+                        <div class="env-item"><strong>Payments:</strong> Razorpay</div>
+                        <div class="env-item"><strong>Images:</strong> Wikimedia Commons</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Developer Session</h3>
+                        <button class="btn btn-sm btn-danger" onclick="devLogout()">Lock Developer Panel</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

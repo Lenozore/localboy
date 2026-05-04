@@ -19,19 +19,25 @@ class StorageService {
   }
 
   // Save user
-  Future<void> saveUser(User user) async {
+  Future<void> saveUser(AppUser user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userKey, jsonEncode(user.toJson()));
   }
 
   // Get user
-  Future<User?> getUser() async {
+  Future<AppUser?> getUser() async {
     final prefs = await SharedPreferences.getInstance();
     final userData = prefs.getString(_userKey);
     if (userData != null) {
-      return User.fromJson(jsonDecode(userData));
+      return AppUser.fromJson(jsonDecode(userData));
     }
     return null;
+  }
+
+  // Delete token (for logout on 401)
+  Future<void> deleteToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
   }
 
   // Clear all (logout)

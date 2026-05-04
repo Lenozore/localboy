@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "305114803461",
+    "project_id": "localboy-a68f5",
+    "storage_bucket": "localboy-a68f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:305114803461:android:17dd39b68ec0f2818f1b6c",
+        "android_client_info": {
+          "package_name": "com.example.localboy_tourist_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqqNnBZEb4A9hpLhv5IqE6S49sdp3ftoo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

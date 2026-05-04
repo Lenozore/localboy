@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:geocoding/geocoding.dart';
 import 'booking_preview_screen.dart';
 
 class CreateBookingScreen extends StatefulWidget {
@@ -16,10 +17,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   String _packageType = 'half_day';
-
-  // Mock coordinates (in real app, use geocoding)
-  final double _hotelLat = 15.2993;
-  final double _hotelLng = 74.1240;
+  bool _isGeocoding = false;
 
   @override
   void dispose() {
@@ -55,7 +53,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     }
   }
 
-  void _previewBooking() {
+  Future<void> _previewBooking() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -70,6 +68,34 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       return;
     }
 
+    // Geocode the hotel address to get lat/lng
+    setState(() => _isGeocoding = true);
+
+    double hotelLat = 15.2993; // Goa default fallback
+    double hotelLng = 74.1240;
+
+    try {
+      final locations = await locationFromAddress(_hotelAddressController.text);
+      if (locations.isNotEmpty) {
+        hotelLat = locations.first.latitude;
+        hotelLng = locations.first.longitude;
+      }
+    } catch (e) {
+      // Geocoding failed — use Goa defaults and continue
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not locate address, using default Goa location'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeocoding = false);
+    }
+
+    if (!mounted) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -78,8 +104,8 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
           startTime: '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}',
           packageType: _packageType,
           hotelAddress: _hotelAddressController.text,
-          hotelLat: _hotelLat,
-          hotelLng: _hotelLng,
+          hotelLat: hotelLat,
+          hotelLng: hotelLng,
         ),
       ),
     );
@@ -211,17 +237,23 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
             // Preview Button
             ElevatedButton(
-              onPressed: _previewBooking,
+              onPressed: _isGeocoding ? null : _previewBooking,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Preview Booking',
-                style: TextStyle(fontSize: 16),
-              ),
+              child: _isGeocoding
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text(
+                      'Preview Booking',
+                      style: TextStyle(fontSize: 16),
+                    ),
             ),
           ],
         ),

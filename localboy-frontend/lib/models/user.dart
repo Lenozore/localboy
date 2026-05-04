@@ -1,25 +1,40 @@
-class User {
+class AppUser {
   final String id;
-  final String phone;
-  final String? name;
+  final String? phone;
   final String? email;
+  final String? name;
+  final DateTime? dob;
+  final String? avatarUrl;
   final String role;
+  final bool isPhoneVerified;
+  final bool isEmailVerified;
+  final bool isProfileComplete;
 
-  User({
+  AppUser({
     required this.id,
-    required this.phone,
-    this.name,
+    this.phone,
     this.email,
+    this.name,
+    this.dob,
+    this.avatarUrl,
     required this.role,
+    required this.isPhoneVerified,
+    required this.isEmailVerified,
+    required this.isProfileComplete,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    return AppUser(
       id: json['id'],
       phone: json['phone'],
-      name: json['name'],
       email: json['email'],
+      name: json['name'],
+      dob: json['dob'] != null ? DateTime.tryParse(json['dob'].toString()) : null,
+      avatarUrl: json['avatar_url'],
       role: json['role'] ?? 'tourist',
+      isPhoneVerified: json['is_phone_verified'] ?? false,
+      isEmailVerified: json['is_email_verified'] ?? false,
+      isProfileComplete: json['is_profile_complete'] ?? false,
     );
   }
 
@@ -27,9 +42,14 @@ class User {
     return {
       'id': id,
       'phone': phone,
-      'name': name,
       'email': email,
+      'name': name,
+      'dob': dob?.toIso8601String(),
+      'avatar_url': avatarUrl,
       'role': role,
+      'is_phone_verified': isPhoneVerified,
+      'is_email_verified': isEmailVerified,
+      'is_profile_complete': isProfileComplete,
     };
   }
 }
